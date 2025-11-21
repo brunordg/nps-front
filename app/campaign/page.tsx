@@ -51,7 +51,7 @@ export default function MinhasCampanhas() {
 
     const hasActiveFilters = search || selectedStatus;
 
-    const filteredCampaigns = campaigns.filter((campaign) => {
+    const filteredCampaigns = campaigns.filter((campaign: CampaignFormData) => {
         return (
             campaign.name.toLowerCase().includes(search.toLowerCase()) &&
             (selectedStatus ? campaign.status === selectedStatus : true)
@@ -150,7 +150,7 @@ export default function MinhasCampanhas() {
         <div className="flex flex-col items-start p-6 space-y-6 sm:ml-14">
             <div className="flex justify-between w-full mb-6">
                 <h1 className="text-3xl font-semibold">Minhas Campanhas</h1>
-                <Button variant="outline" className="ml-4" onClick={() => setModalOpen(true)}>
+                <Button variant="outline" className="ml-4" onClick={() => { setSelectedCampaign(null); setModalOpen(true); }}>
                     Nova Campanha
                 </Button>
             </div>
@@ -230,7 +230,9 @@ export default function MinhasCampanhas() {
                                                     <MoreVertical className="h-5 w-5 text-gray-500 cursor-pointer" />
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent>
-                                                    <DropdownMenuItem>Editar</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => { setSelectedCampaign(campaign); setModalOpen(true); }}>
+                                                        Editar
+                                                    </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => handleDeleteCampaign(campaign)}>Excluir</DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -243,7 +245,7 @@ export default function MinhasCampanhas() {
                 </CardContent>
             </Card>
 
-            <NovaCampanhaModal open={modalOpen} onOpenChange={setModalOpen} onCampaignCreated={handleCampaignCreated} />
+            <NovaCampanhaModal open={modalOpen} onOpenChange={setModalOpen} onCampaignCreated={handleCampaignCreated} initialData={selectedCampaign} />
 
             <ConfirmationDialog
                 open={dialogOpen}

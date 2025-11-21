@@ -15,6 +15,7 @@ import { ptBR } from "date-fns/locale";
 
 
 interface CampaignFormData {
+  id?: number;
   name: string;
   description: string;
   status: string;
@@ -32,23 +33,53 @@ const statusOptions = [
   { label: "Inativa", value: "INACTIVE", color: "bg-red-500" },
 ];
 
-export default function NovaCampanhaModal({ open, onOpenChange, onCampaignCreated }: { open: boolean; onOpenChange: (open: boolean) => void; onCampaignCreated: () => void; }) {
+const emptyForm = (): CampaignFormData => ({
+  name: "",
+  description: "",
+  status: "",
+  createdAt: undefined,
+  publishedAt: undefined,
+  closedAt: undefined,
+});
+
+export default function NovaCampanhaModal({
+  open,
+  onOpenChange,
+  onCampaignCreated,
+  initialData,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCampaignCreated: () => void;
+  initialData?: CampaignFormData | null;
+}) {
   const [campaigns, setCampaigns] = useState<CampaignFormData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
-  const [formData, setFormData] = useState<CampaignFormData>({
-    name: "",
-    description: "",
-    status: "",
-    createdAt: undefined,
-    publishedAt: undefined,
-    closedAt: undefined,
-  });
+  const [formData, setFormData] = useState<CampaignFormData>(emptyForm());
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     setToken(storedToken);
   }, []);
+
+  // When modal opens, populate form with initialData (for edit) or empty (for create)
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        // Ensure dates are Date objects if provided as strings
+        const parsed: CampaignFormData = {
+          ...initialData,
+          createdAt: initialData.createdAt ? new Date(initialData.createdAt) : undefined,
+          publishedAt: initialData.publishedAt ? new Date(initialData.publishedAt) : undefined,
+          closedAt: initialData.closedAt ? new Date(initialData.closedAt) : undefined,
+        };
+        setFormData(parsed);
+      } else {
+        setFormData(emptyForm());
+      }
+    }
+  }, [open, initialData]);
 
   useEffect(() => {
     const fetchCampaigns = async () => {
@@ -65,7 +96,7 @@ export default function NovaCampanhaModal({ open, onOpenChange, onCampaignCreate
         if (!res.ok) throw new Error("Erro ao buscar campanhas.");
 
         const data = await res.json();
-        setCampaigns(data); // Preenche o estado com as campanhas recebidas
+        setCampaigns(data);
       } catch (error) {
         console.error("Erro ao buscar campanhas:", error);
       } finally {
@@ -73,35 +104,53 @@ export default function NovaCampanhaModal({ open, onOpenChange, onCampaignCreate
       }
     };
 
-    if (token) fetchCampaigns(); // Chama a função somente se o token existir
+    if (token) fetchCampaigns();
   }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      
-      const bodyData = {
-        ...formData,        
-        company: { id: 1 }
+      // Prepare payload: convert Date -> ISO strings if present
+      const payload: any = {
+        ...formData,
+        createdAt: formData.createdAt ? formData.createdAt.toISOString() : undefined,
+        publishedAt: formData.publishedAt ? formData.publishedAt.toISOString() : undefined,
+        closedAt: formData.closedAt ? formData.closedAt.toISOString() : undefined,
+        company: { id: 1 },
       };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/campaigns`, {
-        method: 'POST',
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(bodyData),
-      });
-
-      if (!res.ok) throw new Error("Erro ao cadastrar campanha.");
+      let res: Response;
+      if (formData.id) {
+        // Update existing campaign
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/campaigns/${formData.id}`, {
+          method: 'PUT',
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("Erro ao atualizar campanha.");
+      } else {
+        // Create new campaign
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/campaigns`, {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("Erro ao cadastrar campanha.");
+      }
 
       onCampaignCreated();
-
     } catch (error) {
       console.error(error);
     } finally {
-      setFormData({ name: "", description: "", status: "", createdAt: undefined, publishedAt: undefined, closedAt: undefined });
+      setLoading(false);
+      setFormData(emptyForm());
       onOpenChange(false);
     }
   };
@@ -126,14 +175,13 @@ export default function NovaCampanhaModal({ open, onOpenChange, onCampaignCreate
             selected={selectedDate}
             onSelect={(date) => handleChange(field, date)}
             locale={ptBR}
-            disabled={(date) => {              
+            disabled={(date) => {
               if (field === "closedAt" && formData.publishedAt) {
                 return date < formData.publishedAt;
               }
-              return false; 
+              return false;
             }}
           />
-
         </PopoverContent>
       </Popover>
     </div >
@@ -143,8 +191,8 @@ export default function NovaCampanhaModal({ open, onOpenChange, onCampaignCreate
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Nova Campanha</DialogTitle>
-          <DialogDescription className="text-base">Preencha os campos abaixo para criar uma nova campanha de pesquisa.</DialogDescription>
+          <DialogTitle className="text-2xl">{formData.id ? "Editar Campanha" : "Nova Campanha"}</DialogTitle>
+          <DialogDescription className="text-base">Preencha os campos abaixo para criar ou alterar uma campanha de pesquisa.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 py-6">
@@ -185,8 +233,8 @@ export default function NovaCampanhaModal({ open, onOpenChange, onCampaignCreate
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-11 mr-4">Cancelar</Button>
-            <Button type="submit" className="h-11">Criar Campanha</Button>
+            <Button type="button" variant="outline" onClick={() => { setFormData(emptyForm()); onOpenChange(false); }} className="h-11 mr-4">Cancelar</Button>
+            <Button type="submit" className="h-11" disabled={loading}>{formData.id ? "Salvar Alterações" : "Criar Campanha"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
