@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { companieservice } from "../api/companiesService";
+import { CompanyFormData } from "../types/company";
 
 
 export default function Companies() {
@@ -83,6 +84,10 @@ export default function Companies() {
     setLoading(true);
 
     try {
+      if (!selectedCompany.id) {
+        throw new Error("ID da empresa não encontrado.");
+      }
+
       await companieservice.delete(selectedCompany.id);
       setCompanies((prev) => prev.filter((c) => c.id !== selectedCompany.id));
     } catch (error) {
@@ -101,7 +106,7 @@ export default function Companies() {
     <div className="flex flex-col items-start p-6 space-y-6 sm:ml-14">
       <div className="flex justify-between w-full mb-6">
         <h1 className="text-3xl font-semibold">Minhas Empresas</h1>
-        <Button variant="outline" className="ml-4" onClick={() => { setSelectedCompany(null); setModalOpen(true); }}>
+        <Button className="ml-4" onClick={() => { setSelectedCompany(null); setModalOpen(true); }}>
           Nova Empresa
         </Button>
       </div>

@@ -118,7 +118,7 @@ export default function MinhasCampanhas() {
         <div className="flex flex-col items-start p-6 space-y-6 sm:ml-14">
             <div className="flex justify-between w-full mb-6">
                 <h1 className="text-3xl font-semibold">Minhas Campanhas</h1>
-                <Button variant="outline" className="ml-4" onClick={() => { setSelectedCampaign(null); setModalOpen(true); }}>
+                <Button className="ml-4" onClick={() => { setSelectedCampaign(null); setModalOpen(true); }}>
                     Nova Campanha
                 </Button>
             </div>
