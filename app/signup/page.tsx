@@ -32,7 +32,7 @@ type City = {
     nome: string;
 };
 
-const fetchStates = async (): Promise<State[]> => {    
+const fetchStates = async (): Promise<State[]> => {
     const statesResponse = await fetch(`${process.env.SERVICO_DADOS}/api/v1/localidades/estados?view=nivelado`);
 
     const statesData = await statesResponse.json();
@@ -128,7 +128,7 @@ export default function Signup() {
             const data = await res.json();
             toast.success("Cadastro realizado com sucesso!");
 
-            localStorage.setItem('token', data.token);
+            sessionStorage.setItem('token', data.token);
 
             router.push('/');
         } catch (error) {

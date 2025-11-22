@@ -12,33 +12,18 @@ import NovaCompanyModal from "@/components/new-company";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { companieservice } from "../api/companiesService";
 
-interface SubscriptionPlan {
-  id: number;
-  name: string;
-  description: string;
-  maxCampaigns: number;
-  maxResponsesPerMonth: number;
-}
-
-interface CompanyData {
-  id: number;
-  document: string;
-  name: string;
-  subscriptionPlan: SubscriptionPlan | null;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export default function Companies() {
   const [token, setToken] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedPlan, setSelectedPlan] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [companies, setCompanies] = useState<CompanyData[]>([]);
+  const [companies, setCompanies] = useState<CompanyFormData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<CompanyData | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyFormData | null>(null);
 
   const clearFilters = () => {
     setSearch("");
@@ -47,7 +32,7 @@ export default function Companies() {
 
   const hasActiveFilters = search || selectedPlan;
 
-  const filteredCompanies = companies.filter((company: CompanyData) => {
+  const filteredCompanies = companies.filter((company: CompanyFormData) => {
     return (
       company.name.toLowerCase().includes(search.toLowerCase()) &&
       (selectedPlan ? company.subscriptionPlan?.name === selectedPlan : true)
@@ -55,7 +40,7 @@ export default function Companies() {
   });
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
+    const storedToken = sessionStorage.getItem("token");
     setToken(storedToken);
   }, []);
 
@@ -64,19 +49,11 @@ export default function Companies() {
   }, [token]);
 
   const fetchCompanies = async () => {
-    setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/companies`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      setLoading(true);
 
-      if (!res.ok) throw new Error("Erro ao buscar empresas.");
+      const data = await companieservice.list();
 
-      const data = await res.json();
       setCompanies(data);
     } catch (error) {
       console.error("Erro ao buscar empresas:", error);
@@ -84,6 +61,7 @@ export default function Companies() {
       setLoading(false);
     }
   };
+
 
   const handleCompanyCreated = () => {
     if (token) fetchCompanies();
@@ -95,32 +73,20 @@ export default function Companies() {
     return format(dateObj, "PPP", { locale: ptBR });
   };
 
-  const handleDeleteCompany = async (company: CompanyData) => {
+  const handleDeleteCompany = async (company: CompanyFormData) => {
     setSelectedCompany(company);
     setDialogOpen(true);
   };
 
   const confirmDeleteCompany = async () => {
-    if (!selectedCompany || !token) return;
-
+    if (!selectedCompany) return;
     setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/companies/${selectedCompany.id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Erro ao deletar empresa.");
-
-      setCompanies((prevCompanies) =>
-        prevCompanies.filter((company) => company.id !== selectedCompany.id)
-      );
+      await companieservice.delete(selectedCompany.id);
+      setCompanies((prev) => prev.filter((c) => c.id !== selectedCompany.id));
     } catch (error) {
-      console.error("Erro ao deletar empresa:", error);
+      console.error("Erro ao deletar:", error);
     } finally {
       setLoading(false);
       setDialogOpen(false);

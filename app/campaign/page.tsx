@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import NovaCampanhaModal from "@/components/new-campaign";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Search, X } from "lucide-react";
-import NovaCampanhaModal from "@/components/new-campaign";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { MoreVertical, Search, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { campaignService } from "../api/campaignService";
+import { CampaignFormData } from "../types/campaign";
 
 
 const statusOptions = [
@@ -23,18 +25,8 @@ const statusOptions = [
     { label: "Inativa", value: "INACTIVE", color: "bg-red-500" },
 ];
 
-interface CampaignFormData {
-    id: number;
-    name: string;
-    description: string;
-    status: string;
-    createdAt?: Date;
-    publishedAt?: Date;
-    closedAt?: Date;
-}
 
 export default function MinhasCampanhas() {
-    const [token, setToken] = useState<string | null>(null);
     const [search, setSearch] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
@@ -60,27 +52,18 @@ export default function MinhasCampanhas() {
 
     useEffect(() => {
         const storedToken = localStorage.getItem("token");
-        setToken(storedToken);
     }, []);
 
     useEffect(() => {
-        if (token) fetchCampaigns();
-    }, [token]);
+        fetchCampaigns();
+    }, []);
 
     const fetchCampaigns = async () => {
-        setLoading(true);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/campaigns`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            setLoading(true);
 
-            if (!res.ok) throw new Error("Erro ao buscar campanhas.");
+            const data = await campaignService.list();
 
-            const data = await res.json();
             setCampaigns(data);
         } catch (error) {
             console.error("Erro ao buscar campanhas:", error);
@@ -90,9 +73,8 @@ export default function MinhasCampanhas() {
     };
 
     const handleCampaignCreated = () => {
-        if (token) fetchCampaigns();
+        fetchCampaigns();
     };
-
 
     const formatDate = (date: string | Date | undefined) => {
         if (!date) return "";
@@ -117,34 +99,20 @@ export default function MinhasCampanhas() {
     };
 
     const confirmDeleteCampaign = async () => {
-        if (!selectedCampaign || !token) return;
-
+        if (!selectedCampaign) return;
         setLoading(true);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/campaigns/${selectedCampaign.id}`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            if (!res.ok) throw new Error("Erro ao deletar campanha.");
-
-            setCampaigns((prevCampaigns) =>
-                prevCampaigns.filter((campaign) => campaign.id !== selectedCampaign.id)
-            );
-
+            await campaignService.delete(selectedCampaign.id!);
+            setCampaigns((prev) => prev.filter((c) => c.id !== selectedCampaign.id));
         } catch (error) {
-            console.error("Erro ao deletar campanha:", error);
+            console.error("Erro ao deletar:", error);
         } finally {
             setLoading(false);
             setDialogOpen(false);
             setSelectedCampaign(null);
         }
-    }
-
+    };
 
     return (
         <div className="flex flex-col items-start p-6 space-y-6 sm:ml-14">

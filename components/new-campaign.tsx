@@ -1,28 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { campaignService } from "@/app/api/campaignService";
+import { CampaignFormData } from "@/app/types/campaign";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
-
-interface CampaignFormData {
-  id?: number;
-  name: string;
-  description: string;
-  status: string;
-  createdAt?: Date;
-  publishedAt?: Date;
-  closedAt?: Date;
-}
 
 const statusOptions = [
   { label: "Rascunho", value: "DRAFT", color: "bg-gray-400" },
@@ -53,21 +45,12 @@ export default function NovaCampanhaModal({
   onCampaignCreated: () => void;
   initialData?: CampaignFormData | null;
 }) {
-  const [campaigns, setCampaigns] = useState<CampaignFormData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [token, setToken] = useState<string | null>(null);
   const [formData, setFormData] = useState<CampaignFormData>(emptyForm());
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    setToken(storedToken);
-  }, []);
-
-  // When modal opens, populate form with initialData (for edit) or empty (for create)
-  useEffect(() => {
     if (open) {
       if (initialData) {
-        // Ensure dates are Date objects if provided as strings
         const parsed: CampaignFormData = {
           ...initialData,
           createdAt: initialData.createdAt ? new Date(initialData.createdAt) : undefined,
@@ -81,68 +64,15 @@ export default function NovaCampanhaModal({
     }
   }, [open, initialData]);
 
-  useEffect(() => {
-    const fetchCampaigns = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/campaigns`, {
-          method: 'GET',
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) throw new Error("Erro ao buscar campanhas.");
-
-        const data = await res.json();
-        setCampaigns(data);
-      } catch (error) {
-        console.error("Erro ao buscar campanhas:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (token) fetchCampaigns();
-  }, [token]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Prepare payload: convert Date -> ISO strings if present
-      const payload: any = {
-        ...formData,
-        createdAt: formData.createdAt ? formData.createdAt.toISOString() : undefined,
-        publishedAt: formData.publishedAt ? formData.publishedAt.toISOString() : undefined,
-        closedAt: formData.closedAt ? formData.closedAt.toISOString() : undefined,
-        company: { id: 1 },
-      };
 
-      let res: Response;
       if (formData.id) {
-        // Update existing campaign
-        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/campaigns/${formData.id}`, {
-          method: 'PUT',
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error("Erro ao atualizar campanha.");
+        await campaignService.update(formData.id, formData);
       } else {
-        // Create new campaign
-        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/campaigns`, {
-          method: 'POST',
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error("Erro ao cadastrar campanha.");
+        await campaignService.create(formData);
       }
 
       onCampaignCreated();
