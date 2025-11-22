@@ -33,7 +33,7 @@ type City = {
 };
 
 const fetchStates = async (): Promise<State[]> => {
-    const statesResponse = await fetch(`${process.env.SERVICO_DADOS}/api/v1/localidades/estados?view=nivelado`);
+    const statesResponse = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados?view=nivelado`);
 
     const statesData = await statesResponse.json();
     statesData.sort((a: State, b: State) => a["UF-nome"].localeCompare(b["UF-nome"]));
@@ -41,7 +41,7 @@ const fetchStates = async (): Promise<State[]> => {
 };
 
 const fetchCities = async (ufId: number): Promise<City[]> => {
-    const citiesResponse = await fetch(`${process.env.SERVICO_DADOS}/api/v1/localidades/estados/${ufId}/municipios`);
+    const citiesResponse = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${ufId}/municipios`);
     const citiesData = await citiesResponse.json();
     citiesData.sort((a: City, b: City) => a.nome.localeCompare(b.nome));
     return citiesData;
@@ -128,9 +128,10 @@ export default function Signup() {
             const data = await res.json();
             toast.success("Cadastro realizado com sucesso!");
 
-            sessionStorage.setItem('token', data.token);
+            setTimeout(() => {
+                router.push('/login');
+            }, 1000);
 
-            router.push('/');
         } catch (error) {
             toast.error("Ocorreu um erro ao realizar o cadastro. Tente novamente.");
         } finally {
