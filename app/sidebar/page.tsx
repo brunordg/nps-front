@@ -79,7 +79,7 @@ export function Sidebar() {
 
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Link href="#" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground">
+                                <Link href="/payment" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground">
                                     <Settings2 className="h-4 w-4" />
                                     <span className="sr-only">Configurações</span>
                                 </Link>
