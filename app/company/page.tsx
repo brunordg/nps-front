@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import { columns } from "./columns";
 import { DataTable } from "./data-table";
 
 import { companieservice } from "../api/companiesService";
 import { CompanyFormData } from "../types/company";
+import { columns } from "./columns";
 import NovaCompanyModal from "./new-company";
 
 export default function Companies() {
@@ -25,8 +25,17 @@ export default function Companies() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const [companies, setCompanies] = useState<CompanyFormData[]>([]);
-  const [loading, setLoading] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<CompanyFormData | null>(null);
+
+  const columnsDef = columns({
+    onEdit: (company) => {
+      setSelectedCompany(company);
+      setModalOpen(true);
+    },
+    onDelete: (company) => {
+      handleDeleteCompany(company);
+    },
+  });
 
   useEffect(() => {
     setToken(sessionStorage.getItem("token"));
@@ -38,13 +47,10 @@ export default function Companies() {
 
   const fetchCompanies = async () => {
     try {
-      setLoading(true);
       const data = await companieservice.list();
       setCompanies(data);
     } catch (error) {
       console.error("Erro ao buscar empresas:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -72,13 +78,11 @@ export default function Companies() {
     if (!selectedCompany?.id) return;
 
     try {
-      setLoading(true);
       await companieservice.delete(selectedCompany.id);
       setCompanies((prev) => prev.filter((c) => c.id !== selectedCompany.id));
     } catch (err) {
       console.error("Erro ao deletar empresa:", err);
     } finally {
-      setLoading(false);
       setDialogOpen(false);
       setSelectedCompany(null);
     }
@@ -130,7 +134,7 @@ export default function Companies() {
       </div>
 
       <DataTable
-        columns={columns}
+        columns={columnsDef}
         data={filteredCompanies}
         onEdit={(company) => { setSelectedCompany(company); setModalOpen(true); }}
         onDelete={handleDeleteCompany}

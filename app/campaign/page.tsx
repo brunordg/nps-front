@@ -3,27 +3,15 @@
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import NovaCampanhaModal from "@/components/new-campaign";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { MoreVertical, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { campaignService } from "../api/campaignService";
 import { CampaignFormData } from "../types/campaign";
-
-
-const statusOptions = [
-    { label: "Rascunho", value: "DRAFT", color: "bg-gray-400" },
-    { label: "Agendada", value: "SCHEDULED", color: "bg-yellow-400" },
-    { label: "Ativa", value: "ACTIVE", color: "bg-green-500" },
-    { label: "Pausada", value: "PAUSED", color: "bg-orange-400" },
-    { label: "Finalizada", value: "COMPLETED", color: "bg-gray-500" },
-    { label: "Inativa", value: "INACTIVE", color: "bg-red-500" },
-];
+import { columns } from "./columns";
+import { DataTable } from "./data-table";
+import { statusOptions } from "../types/statusOptions";
 
 
 export default function MinhasCampanhas() {
@@ -35,6 +23,15 @@ export default function MinhasCampanhas() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedCampaign, setSelectedCampaign] = useState<CampaignFormData | null>(null);
 
+    const columnsDef = columns({
+        onEdit: (campaign) => {
+            setSelectedCampaign(campaign);
+            setModalOpen(true);
+        },
+        onDelete: (campaign) => {
+            handleDeleteCampaign(campaign);
+        },
+    });
 
     const clearFilters = () => {
         setSearch("");
@@ -76,11 +73,7 @@ export default function MinhasCampanhas() {
         fetchCampaigns();
     };
 
-    const formatDate = (date: string | Date | undefined) => {
-        if (!date) return "";
-        const dateObj = new Date(date);
-        return format(dateObj, "PPP", { locale: ptBR });
-    };
+
 
     const getStatusLabel = (status: string) => {
         const statusObj = statusOptions.find((option) => option.value === status);
@@ -142,7 +135,7 @@ export default function MinhasCampanhas() {
                             <SelectItem key={option.value} value={option.label}>
                                 <div className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full ${option.color}`} />
-                                    {option.value}
+                                    {option.label}
                                 </div>
                             </SelectItem>
                         ))}
@@ -156,62 +149,12 @@ export default function MinhasCampanhas() {
                 )}
             </div>
 
-            <Card className="w-full">
-                <CardHeader>
-                    <CardTitle>Campanhas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Table className="w-full">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="font-semibold text-gray-600">Nome da Campanha</TableHead>
-                                <TableHead className="font-semibold text-gray-600">Data de Início</TableHead>
-                                <TableHead className="font-semibold text-gray-600">Data de Término</TableHead>
-                                <TableHead className="font-semibold text-gray-600">Status</TableHead>
-                                <TableHead className="font-semibold text-gray-600">Ações</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center">
-                                        Carregando...
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                filteredCampaigns.map((campaign, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{campaign.name}</TableCell>
-                                        <TableCell>{campaign.createdAt ? formatDate(campaign.createdAt) : '-'}</TableCell>
-                                        <TableCell>{campaign.closedAt ? formatDate(campaign.closedAt) : '-'}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex items-center gap-2">
-                                                    <div className={`w-2 h-2 rounded-full ${getStatusColor(campaign.status)}`} />
-                                                    {getStatusLabel(campaign.status)}
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger>
-                                                    <MoreVertical className="h-5 w-5 text-gray-500 cursor-pointer" />
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent>
-                                                    <DropdownMenuItem onClick={() => { setSelectedCampaign(campaign); setModalOpen(true); }}>
-                                                        Editar
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleDeleteCampaign(campaign)}>Excluir</DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            <DataTable
+                columns={columnsDef}
+                data={filteredCampaigns}
+                onEdit={(campaign) => { setSelectedCampaign(campaign); setModalOpen(true); }}
+                onDelete={handleDeleteCampaign}
+            />
 
             <NovaCampanhaModal open={modalOpen} onOpenChange={setModalOpen} onCampaignCreated={handleCampaignCreated} initialData={selectedCampaign} />
 
