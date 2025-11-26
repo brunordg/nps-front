@@ -1,3 +1,4 @@
+import { CompanyFormData } from "../types/company";
 import api from "./axios";
 
 

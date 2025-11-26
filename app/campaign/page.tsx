@@ -1,7 +1,6 @@
 "use client";
 
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
-import NovaCampanhaModal from "@/components/new-campaign";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +11,7 @@ import { CampaignFormData } from "../types/campaign";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
 import { statusOptions } from "../types/statusOptions";
+import NovaCampanhaModal from "./new-campaign";
 
 
 export default function MinhasCampanhas() {

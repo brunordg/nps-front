@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectItem, SelectContent } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 type Question = {
   id: string;
   title: string;
-  type: "short" | "paragraph" | "multiple";
+  type: "short" | "multiple" | "checkbox" | "nps";
   options: string[];
+  required: boolean;
 };
 
 export default function FormBuilder() {
@@ -21,6 +23,7 @@ export default function FormBuilder() {
       title: "",
       type: "short",
       options: [],
+      required: false,
     },
   ]);
 
@@ -32,6 +35,7 @@ export default function FormBuilder() {
         title: "",
         type: "short",
         options: [],
+        required: false,
       },
     ]);
   };
@@ -56,58 +60,79 @@ export default function FormBuilder() {
     );
   };
 
+  const selectNpsValue = (id: string, value: number) => {
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.id === id ? { ...q, options: [String(value)] } : q
+      )
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center">
       <div className="max-w-3xl w-full space-y-4">
-
-        {/* Header estilo Google Forms minimalista */}
+        
         <Card className="border-t-4 border-gray-500 shadow-sm">
           <CardContent className="p-6 space-y-4">
             <Input
               placeholder="Título do formulário"
-              className="text-2xl font-semibold bg-transparent border-none shadow-none focus-visible:ring-0"
+              className="text-2xl font-semibold bg-transparent shadow-none focus-visible:ring-0"
             />
             <Input
               placeholder="Descrição do formulário"
-              className="bg-transparent border-none shadow-none focus-visible:ring-0"
+              className="bg-transparent shadow-none focus-visible:ring-0"
             />
           </CardContent>
         </Card>
-
-        {/* Perguntas */}
+        
         {questions.map((q) => (
           <Card key={q.id} className="shadow-sm">
             <CardContent className="p-6 space-y-4">
 
-              {/* Título da pergunta + Tipo */}
-              <div className="flex justify-between gap-4">
+              <div className="flex items-start justify-between gap-4">
                 <Input
                   placeholder="Escreva a pergunta"
                   value={q.title}
                   onChange={(e) => updateQuestion(q.id, "title", e.target.value)}
+                  className="flex-1"
                 />
 
-                <Select
-                  value={q.type}
-                  onValueChange={(v) => updateQuestion(q.id, "type", v)}
-                >
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="short">Resposta curta</SelectItem>
-                    <SelectItem value="paragraph">Parágrafo</SelectItem>
-                    <SelectItem value="multiple">Múltipla escolha</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="flex flex-col items-end gap-2">
+                  <Select
+                    value={q.type}
+                    onValueChange={(v) => updateQuestion(q.id, "type", v)}
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="short">Resposta curta</SelectItem>
+                      <SelectItem value="paragraph">Parágrafo</SelectItem>
+                      <SelectItem value="multiple">Múltipla escolha (rádio)</SelectItem>
+                      <SelectItem value="checkbox">Múltipla escolha (checkbox)</SelectItem>
+                      <SelectItem value="nps">NPS (0 a 10)</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-              {/* Múltipla escolha */}
-              {q.type === "multiple" && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Obrigatória</span>
+                    <Switch
+                      checked={q.required}
+                      onCheckedChange={(v) => updateQuestion(q.id, "required", Boolean(v))}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {(q.type === "multiple" || q.type === "checkbox") && (
                 <div className="space-y-2">
                   {q.options.map((opt, idx) => (
                     <div key={idx} className="flex items-center gap-3">
-                      <input type="radio" disabled className="mt-1" />
+                      <input
+                        type={q.type === "checkbox" ? "checkbox" : "radio"}
+                        disabled
+                        className="mt-1"
+                      />
                       <Input
                         value={opt}
                         className="w-full"
@@ -130,7 +155,28 @@ export default function FormBuilder() {
                   </Button>
                 </div>
               )}
+              
+              {q.type === "nps" && (
+                <div className="flex gap-2 flex-wrap">
+                  {[...Array(11)].map((_, i) => {
+                    const selected = q.options[0] === String(i);
 
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => selectNpsValue(q.id, i)}
+                        className={`
+                          w-10 h-10 border rounded-md flex items-center justify-center cursor-pointer transition
+                          ${selected ? "bg-gray-800 text-white" : "hover:bg-gray-200"}
+                        `}
+                      >
+                        {i}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              
               <Button
                 variant="ghost"
                 size="sm"
@@ -143,8 +189,7 @@ export default function FormBuilder() {
             </CardContent>
           </Card>
         ))}
-
-        {/* Botão Adicionar Pergunta */}
+        
         <div className="flex justify-center">
           <Button
             onClick={addQuestion}

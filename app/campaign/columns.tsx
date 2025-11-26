@@ -1,6 +1,6 @@
 "use client"
 
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -83,11 +83,13 @@ export const columns = ({ onEdit, onDelete }: ColumnsParams): ColumnDef<Campaign
                         <DropdownMenuTrigger>
                             <MoreHorizontal className="h-5 w-5 text-gray-500 cursor-pointer" />
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
+                        <DropdownMenuContent>                    
                             <DropdownMenuItem onClick={() => onEdit(row.original)}>
                                 Editar
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onDelete(row.original)}>Excluir</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onDelete(row.original)}>
+                                Excluir
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
