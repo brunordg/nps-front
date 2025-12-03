@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 import { Sidebar } from "./sidebar/page";
-import { Toaster } from "sonner";
-import { tr } from "date-fns/locale";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,16 +32,18 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${inter.className} font-sans antialiased`}>
         <Toaster
           position="top-right"
           expand={true}
           richColors={true}
         />
-        <Sidebar />
-        {children}
+
+        <Sidebar>
+          <main className="flex-1 w-full">
+            {children}
+          </main>
+        </Sidebar>
       </body>
     </html>
   );
