@@ -13,6 +13,7 @@ const breadcrumbMap: Record<string, { label: string; parent?: string }> = {
     "/campaign": { label: "Campanhas", parent: "/" },
     "/quest": { label: "Perguntas", parent: "/" },
     "/payment": { label: "Pagamentos", parent: "/" },
+    "/settings": { label: "Configurações", parent: "/" },
 };
 
 export function Sidebar({ children }: { children: React.ReactNode }) {

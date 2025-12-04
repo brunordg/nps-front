@@ -94,7 +94,7 @@ const data = {
         },
         {
           title: "Configurações",
-          url: "#",
+          url: "/settings",
           icon: Settings,
         },
       ],
