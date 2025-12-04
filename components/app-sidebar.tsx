@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,17 +13,21 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import {
-  Home,
-  Building,
-  Users,
-  FileText,
-  BarChart2,
-  Settings,
+  BarChart3,
+  Building2,
+  ClipboardList,
   CreditCard,
-  Zap,
+  FileText,
+  Home,
+  Link2,
+  MessageSquare,
+  Settings,
+  Users,
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import * as React from "react";
 
 const data = {
   navMain: [
@@ -40,7 +43,7 @@ const data = {
         {
           title: "Empresas",
           url: "/company",
-          icon: Building,
+          icon: Building2,
         },
         {
           title: "Contatos",
@@ -56,17 +59,17 @@ const data = {
         {
           title: "Campanhas",
           url: "/campaign",
-          icon: FileText,
+          icon: ClipboardList,
         },
         {
           title: "Perguntas",
           url: "/quest",
-          icon: FileText,
+          icon: MessageSquare,
         },
         {
           title: "Links",
           url: "#",
-          icon: FileText,
+          icon: Link2,
         },
         {
           title: "Respostas",
@@ -76,7 +79,7 @@ const data = {
         {
           title: "Análises",
           url: "#",
-          icon: BarChart2,
+          icon: BarChart3,
         },
       ],
     },

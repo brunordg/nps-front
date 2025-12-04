@@ -7,7 +7,6 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { usePathname } from "next/navigation";
 import { Home } from "lucide-react";
 
-// Mapeamento de rotas para breadcrumbs
 const breadcrumbMap: Record<string, { label: string; parent?: string }> = {
     "/": { label: "Dashboard" },
     "/company": { label: "Empresas", parent: "/" },
@@ -33,7 +32,6 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
             return [{ label: "Página", href: pathName, isLast: true }];
         }
 
-        // Adiciona o parent se existir
         if (currentRoute.parent) {
             const parentRoute = breadcrumbMap[currentRoute.parent];
             if (parentRoute) {
@@ -45,7 +43,6 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
             }
         }
 
-        // Adiciona a rota atual
         breadcrumbs.push({
             label: currentRoute.label,
             href: pathName,
