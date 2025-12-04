@@ -45,6 +45,7 @@ export default function Login() {
             console.log('Login successful:', res);
 
             sessionStorage.setItem('token', res.token)
+            sessionStorage.setItem("userEmail", email)
 
             router.push('/');
 

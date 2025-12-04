@@ -5,15 +5,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { userService, UserAccount } from "../api/userService";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Settings() {
     const [formData, setFormData] = useState({
-        firstName: "Admin",
-        lastName: "User",
-        email: "admin@sparkfeel.com",
-        phone: "(11) 98765-4321",
+        id: undefined as number | undefined,
+        name: "",
+        email: "",
+        phone: "",
     });
+
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
     const [notifications, setNotifications] = useState({
         newResponses: true,
@@ -21,6 +26,34 @@ export default function Settings() {
         lowNpsAlerts: true,
         newsletter: false,
     });
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                console.log("Buscando dados do usuário...");
+                console.log("Session Storage:", sessionStorage.getItem("userEmail"));
+
+                setLoading(true);
+                const userEmail = sessionStorage.getItem("userEmail") || sessionStorage.getItem("userEmail");
+
+                if (userEmail) {
+                    const userData = await userService.getByEmail(userEmail);
+                    setFormData({
+                        id: userData.id,
+                        name: userData.name || "",
+                        email: userData.email || "",
+                        phone: userData.phone || "",
+                    });
+                }
+            } catch (error) {
+                console.error("Erro ao buscar dados do usuário:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -31,9 +64,19 @@ export default function Settings() {
         setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    const handleSaveChanges = () => {
-        console.log("Salvando alterações:", formData);
-        // Adicionar lógica de salvamento aqui
+    const handleSaveChanges = async () => {
+        if (!formData.id) return;
+
+        try {
+            setSaving(true);
+            await userService.update(formData.id, formData as UserAccount);
+            alert("Alterações salvas com sucesso!");
+        } catch (error) {
+            console.error("Erro ao salvar alterações:", error);
+            alert("Erro ao salvar alterações. Tente novamente.");
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -45,58 +88,79 @@ export default function Settings() {
                 </p>
             </div>
 
+            {/* Informações da Conta */}
             <Card>
                 <CardHeader>
                     <CardTitle>Informações da Conta</CardTitle>
                     <CardDescription>Atualize suas informações pessoais</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="firstName">Nome</Label>
-                            <Input
-                                id="firstName"
-                                name="firstName"
-                                value={formData.firstName}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="lastName">Sobrenome</Label>
-                            <Input
-                                id="lastName"
-                                name="lastName"
-                                value={formData.lastName}
-                                onChange={handleInputChange}
-                            />
-                        </div>
-                    </div>
+                    {loading ? (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-16" />
+                                    <Skeleton className="h-10 w-full" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-20" />
+                                    <Skeleton className="h-10 w-full" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        </>
+                    ) : (
+                        <>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                        />
-                    </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="firstName">Nome</Label>
+                                <Input
+                                    id="firstName"
+                                    name="firstName"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="phone">Telefone</Label>
-                        <Input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                        />
-                    </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">Email</Label>
+                                    <Input
+                                        id="email"
+                                        name="email"
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        disabled
+                                    />
+                                </div>
 
-                    <Button onClick={handleSaveChanges} className="mt-4">
-                        Salvar Alterações
-                    </Button>
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone">Telefone</Label>
+                                    <Input
+                                        id="phone"
+                                        name="phone"
+                                        type="tel"
+                                        value={formData.phone}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                            </div>
+
+
+
+                            <Button onClick={handleSaveChanges} className="mt-4" disabled={saving}>
+                                {saving ? "Salvando..." : "Salvar Alterações"}
+                            </Button>
+                        </>
+                    )}
                 </CardContent>
             </Card>
 
